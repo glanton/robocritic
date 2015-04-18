@@ -1,15 +1,15 @@
 # user interface
 
 import parser
-import nb
 import runner
+import trainer
 
 
 # function that orders the training process, calling parser before the trainer
 def _train():
     training_data = "placeholder training data"
     parsed_training_data = parser.prepare_data(training_data)
-    classifier = nb.train(parsed_training_data)
+    classifier = trainer.train(parsed_training_data)
 
     return classifier
 
@@ -21,6 +21,7 @@ def _classify(classifier):
     results = runner.classify(classifier, parsed_test_data)
 
     return results
+
 
 # interface command loop; controls what interface-level functions the user can call
 def _command_loop(current_classifier):
