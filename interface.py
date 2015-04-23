@@ -1,14 +1,31 @@
 # user interface
 
+# internal imports
 import parser
 import runner
 import trainer
 
+# external imports
+import csv
+
+
+# function that reads a CSV file and returns it as a list of lists (each row is an element in the outer list and each
+# cell is an element in the inner list
+def _read_csv(filename):
+    csv_data = []
+
+    with open(filename, "rt") as f:
+        reader = csv.reader(f)
+        for row in reader:
+            csv_data.append(row)
+
+    return csv_data
+
 
 # function that orders the training process, calling parser before the trainer
 def _train():
-    training_data = "placeholder training data"
-    parsed_training_data = parser.prepare_data(training_data)
+    training_data = _read_csv("input_data/training_data.csv")
+    parsed_training_data = parser.prepare_training_data(training_data)
     classifier = trainer.train(parsed_training_data)
 
     return classifier
@@ -16,8 +33,8 @@ def _train():
 
 # function that orders the classification process, calling parser before the classifier
 def _classify(classifier):
-    test_data = "placeholder test data"
-    parsed_test_data = parser.prepare_data(test_data)
+    test_data = _read_csv("input_data/test_data.csv")
+    parsed_test_data = parser.prepare_test_data(test_data)
     results = runner.classify(classifier, parsed_test_data)
 
     return results
