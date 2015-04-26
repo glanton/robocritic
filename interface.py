@@ -26,7 +26,7 @@ def _read_csv(filename):
 def _train():
     training_data = _read_csv("input_data/master_data_copy.csv")
     parsed_training_data = parser.prepare_training_data(training_data)
-    classifier = trainer.train(parsed_training_data)
+    classifier = trainer.train("nb", parsed_training_data)
 
     return classifier
 

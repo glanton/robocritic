@@ -3,9 +3,7 @@
 
 
 # public interface for trainer; returns a classifier object based on training data
-def train(parsed_training_data):
-    classifier = "placeholder classifier object"
-    for row in parsed_training_data:
-        print(row)
+def train(algorithm, parsed_training_data):
+    classifier = nb(parsed_training_data)
 
     return classifier
