@@ -24,7 +24,7 @@ def _read_csv(filename):
 
 # function that orders the training process, calling parser before the trainer
 def _train():
-    training_data = _read_csv("input_data/training_data.csv")
+    training_data = _read_csv("input_data/master_data_copy.csv")
     parsed_training_data = parser.prepare_training_data(training_data)
     classifier = trainer.train(parsed_training_data)
 

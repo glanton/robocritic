@@ -42,7 +42,8 @@ def _build_featured_data(validated_data, feature_list):
     featured_data = []
 
     # build header row
-    header_row = validated_data[0].extend(feature_list)
+    header_row = list(validated_data[0])
+    header_row.extend(feature_list)
     featured_data.append(header_row)
 
     # build data rows, checking each feature against each record's list of words; a 1 in the matching column means the
@@ -61,7 +62,8 @@ def _build_featured_data(validated_data, feature_list):
                 row_feature_list.append(0)
 
         # append the build data row to the total featured data
-        current_row = row.extend(row_feature_list)
+        current_row = list(row)
+        current_row.extend(row_feature_list)
         featured_data.append(current_row)
 
     return featured_data
@@ -83,26 +85,24 @@ def _manage_parse(validated_data):
 
 
 # validates whether a class has been assigned to each record, and whether exactly 2 classes have been used
+# returns True if classes are incorrect
 def _classes_incorrect(unparsed_data):
     class_list = []
 
-    # remove (already validated) header row from data
-    data_no_headers = unparsed_data.pop(0)
-
     # for each class in data, make sure that it is one of exactly 2 classes
-    for row in data_no_headers:
+    for row in unparsed_data[1:]:
         class_name = row[1]
         if class_name not in class_list:
             if len(class_list) < 2:
                 class_list.append(class_name)
             else:
-                return False
+                return True
 
     # make sure that at exactly 2 classes were found
     if len(class_list) == 2:
-        return True
-    else:
         return False
+    else:
+        return True
 
 
 # one of two public interfaces for parser; returns an updated list of lists of parsed training data; if incoming data
@@ -116,6 +116,8 @@ def prepare_training_data(unparsed_data):
         return "input data too many columns; should be exactly 2"
     elif (unparsed_data[0][0] != "RECORD") or (unparsed_data[0][1] != "CLASS"):
         return "input data headers incorrect; should be 'RECORD', 'CLASS'"
+    elif not unparsed_data[1]:
+        return "input data missing records"
     elif _classes_incorrect(unparsed_data):
         return "input data classes are inconsistent; each record should be assigned 1 of exactly 2 classes"
     else:

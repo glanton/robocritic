@@ -5,6 +5,7 @@
 # public interface for trainer; returns a classifier object based on training data
 def train(parsed_training_data):
     classifier = "placeholder classifier object"
-    print(parsed_training_data)
+    for row in parsed_training_data:
+        print(row)
 
     return classifier
