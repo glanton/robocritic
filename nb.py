@@ -10,12 +10,14 @@ def train(parsed_training_data):
     class_counts = {}
     first_class = parsed_training_data[1][1]
     second_class = ""
+    classifier_features = []
     classifier_details = []
 
-    # build structure of details with feature names
-    for feature_tuple in parsed_training_data[0][2:]:
-        detail_tuple = (feature_tuple[0], 0, 0)
-        classifier_details.append(detail_tuple)
+    # build structure of details with feature names and build list of classifier features
+    for feature in parsed_training_data[0][2:]:
+        detail_list = [feature, 0, 0]
+        classifier_details.append(detail_list)
+        classifier_features.append(feature)
 
     # capture the two class names and count their totals
     for row in parsed_training_data[1:]:
@@ -35,12 +37,12 @@ def train(parsed_training_data):
                     classifier_details[i][2] += 1
 
     # calculate the probability of each feature occurring based on its class occurring
-    for feature_tuple in classifier_details:
-        feature_tuple[1] = feature_tuple[1] / class_counts[first_class]
-        feature_tuple[2] = feature_tuple[2] / class_counts[second_class]
+    for detail_tuple in classifier_details:
+        detail_tuple[1] = detail_tuple[1] / class_counts[first_class]
+        detail_tuple[2] = detail_tuple[2] / class_counts[second_class]
 
     # create new instance of Classifier and populate with classifier details
-    classifier = Classifier("nb", (first_class, second_class))
+    classifier = Classifier.Classifier("nb", (first_class, second_class), classifier_features)
     for detail in classifier_details:
         classifier.add_classifier_detail(detail)
 

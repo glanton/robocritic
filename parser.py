@@ -5,34 +5,38 @@
 # returns data, now with features
 
 # external imports
-import operator
 import nltk
+import operator
+import string
 
 
 # the maximum number of words that can be used as features (if reached included words will have greater occurrence)
-_max_features = 1000
+_max_features = 10000
 
 
 # build the complete dictionary of words found in the data and count the occurrences of each word
 def _build_word_dict(validated_data):
     word_dict = {}
 
-    # tokenize list of words in each record (skipping header row)
+    # tokenize list of words in each record (skipping header row); only count words once per record (no duplicates) and
+    # strip out punctuation
     for row in validated_data[1:]:
-        words = nltk.word_tokenize(row[0])
+        words_with_duplicates = nltk.word_tokenize(row[0])
+        words = set(words_with_duplicates)
         for word in words:
-            if word in word_dict:
-                word_dict[word] += 1
-            else:
-                word_dict[word] = 1
+            if word not in string.punctuation:
+                if word in word_dict:
+                    word_dict[word] += 1
+                else:
+                    word_dict[word] = 1
 
     return word_dict
 
 
-# build the list of tuples (word, count) to be used as record features, keeping within _max_features and prioritizing
+# build the list of words to be used as record features, keeping within _max_features and prioritizing
 # by occurrence (greatest occurrence to lowest)
 def _build_feature_list(word_dict):
-    feature_list = sorted(word_dict.items(), key=operator.itemgetter(1), reverse=True)
+    feature_list = [key for key, value in sorted(word_dict.items(), key=operator.itemgetter(1), reverse=True)]
 
     return feature_list[0:_max_features]
 
@@ -54,8 +58,7 @@ def _build_featured_data(validated_data, feature_list):
         row_feature_list = []
 
         words = nltk.word_tokenize(row[0])
-        for feature_tuple in feature_list:
-            feature = feature_tuple[0]
+        for feature in feature_list:
             if feature in words:
                 row_feature_list.append(1)
             else:
@@ -69,14 +72,26 @@ def _build_featured_data(validated_data, feature_list):
     return featured_data
 
 
-# manage the order of functions required to parse input data; assumes that data has already passed validation
-def _manage_parse(validated_data):
+# manage the order of functions required to parse input training data; assumes that data has already passed validation
+def _manage_training_parse(validated_data):
 
     # word_dict is a dictionary of each word that occurs in the data as keys and their occurrence count as values
     word_dict = _build_word_dict(validated_data)
 
-    # feature_list is a list of (word, count) tuples, sorted by count (occurrence) from greatest to least
+    # feature_list is a list of words, sorted by count (occurrence) from greatest to least
     feature_list = _build_feature_list(word_dict)
+
+    # featured_data is a list of lists, with the first row being headers, and the rest being individual records
+    featured_data = _build_featured_data(validated_data, feature_list)
+
+    return featured_data
+
+
+# manage the order of functions required to parse input test data; assumes that data has already passed validation
+def _manage_test_parse(validated_data, classifier):
+
+    # feature_list is a list of words, sorted by count (occurrence) from greatest to least
+    feature_list = classifier.get_classifier_features()
 
     # featured_data is a list of lists, with the first row being headers, and the rest being individual records
     featured_data = _build_featured_data(validated_data, feature_list)
@@ -121,12 +136,13 @@ def prepare_training_data(unparsed_data):
     elif _classes_incorrect(unparsed_data):
         return "input data classes are inconsistent; each record should be assigned 1 of exactly 2 classes"
     else:
-        return _manage_parse(unparsed_data)
+        print("Parsing training data...")
+        return _manage_training_parse(unparsed_data)
 
 
 # one of two public interfaces for parser; returns an updated list of lists of parsed test data; if incoming data
 # is not formatted correctly returns a descriptive error in a string for the interface to handle
-def prepare_test_data(unparsed_data):
+def prepare_test_data(unparsed_data, classifier):
     if not unparsed_data:
         return "input data is empty"
     elif len(unparsed_data[0]) > 1:
@@ -134,4 +150,5 @@ def prepare_test_data(unparsed_data):
     elif unparsed_data[0][0] != "RECORD":
         return "input data header incorrect; should be 'RECORD'"
     else:
-        return _manage_parse(unparsed_data)
+        print("Parsing test data...")
+        return _manage_test_parse(unparsed_data, classifier)
