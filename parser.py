@@ -13,6 +13,9 @@ import string
 # the maximum number of words that can be used as features (if reached included words will have greater occurrence)
 _max_features = 10000
 
+# the minimum ratio of word's occurrence to the number of training records (occurrences / number of records)
+_min_occ_ratio = 0.0005
+
 
 # build the complete dictionary of words found in the data and count the occurrences of each word
 def _build_word_dict(validated_data):
@@ -35,8 +38,17 @@ def _build_word_dict(validated_data):
 
 # build the list of words to be used as record features, keeping within _max_features and prioritizing
 # by occurrence (greatest occurrence to lowest)
-def _build_feature_list(word_dict):
-    feature_list = [key for key, value in sorted(word_dict.items(), key=operator.itemgetter(1), reverse=True)]
+def _build_feature_list(word_dict, data_length):
+    word_count_list = sorted(word_dict.items(), key=operator.itemgetter(1), reverse=True)
+
+    # build feature list from sorted word count list until the occurrence ratio falls below the minimum
+    feature_list = []
+    for feature in word_count_list:
+        occ_ratio = feature[1] / data_length
+        if occ_ratio >= _min_occ_ratio:
+            feature_list.append(feature[0])
+        else:
+            break
 
     return feature_list[0:_max_features]
 
@@ -50,11 +62,20 @@ def _build_featured_data(validated_data, feature_list):
     header_row.extend(feature_list)
     featured_data.append(header_row)
 
+    # count for debugging purposes
+    count = 0
+
     # build data rows, checking each feature against each record's list of words; a 1 in the matching column means the
     # feature exists; a 0 means that it does not (columns will be either RECORD, CLASS, [FEATURE_0], [FEATURE_1], etc.
     # in the case of training data or RECORD, [FEATURE_0], [FEATURE_1], etc. in the case of test data; thus if a record
     # has FEATURE_1 and is training data the value of the 4th item in that row's list would be 1
     for row in validated_data[1:]:
+
+        # print count and increment for debugging purposes
+        if count % 100 == 0:
+            print("_build_featured_data: " + str(count))
+        count += 1
+
         row_feature_list = []
 
         words = nltk.word_tokenize(row[0])
@@ -79,7 +100,8 @@ def _manage_training_parse(validated_data):
     word_dict = _build_word_dict(validated_data)
 
     # feature_list is a list of words, sorted by count (occurrence) from greatest to least
-    feature_list = _build_feature_list(word_dict)
+    data_length = len(validated_data) - 1
+    feature_list = _build_feature_list(word_dict, data_length)
 
     # featured_data is a list of lists, with the first row being headers, and the rest being individual records
     featured_data = _build_featured_data(validated_data, feature_list)

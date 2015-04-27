@@ -22,20 +22,36 @@ def _read_csv(filename):
     return csv_data
 
 
+# write a CSV file with the results of the most recent test data classification
+def _write_csv(filename, results):
+    with open(filename, "w") as f:
+        writer = csv.writer(f)
+        writer.writerows(results)
+
+
 # function that orders the training process, calling parser before the trainer
 def _train():
-    training_data = _read_csv("input_data/training_data.csv")
+    training_data = _read_csv("input_data/training_split_8000.csv")
     parsed_training_data = parser.prepare_training_data(training_data)
     classifier = trainer.train(parsed_training_data, "nb")
+
+    _write_csv("output_data/classifier_details.csv", classifier.classifier_details)
 
     return classifier
 
 
 # function that orders the classification process, calling parser before the classifier
 def _classify(classifier):
-    test_data = _read_csv("input_data/test_data.csv")
-    parsed_test_data = parser.prepare_test_data(test_data, classifier)
-    results = runner.classify(parsed_test_data, classifier)
+    results = ""
+
+    if classifier:
+        test_data = _read_csv("input_data/test_split_2000.csv")
+        parsed_test_data = parser.prepare_test_data(test_data, classifier)
+        results = runner.classify(parsed_test_data, classifier)
+
+        _write_csv("output_data/classified_test_data.csv", results)
+    else:
+        print("No classifier loaded")
 
     return results
 

@@ -1,5 +1,4 @@
-# the classifier class; built by running an classification algorithm on the
-# training data set
+# the classifier class; built by running an classification algorithm on the training data set
 
 
 class Classifier:
@@ -7,7 +6,7 @@ class Classifier:
     # requires algorithm string and class_names tuple of strings to initialize (expects exactly 2 class names)
     def __init__(self, algorithm, class_names_counts, classifier_features):
         self.algorithm = algorithm
-        self.class_names = class_names_counts
+        self.class_names_counts = class_names_counts
         self.classifier_features = classifier_features
         self.classifier_details = []
 
