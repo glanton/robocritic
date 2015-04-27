@@ -4,8 +4,7 @@
 import Classifier
 
 
-# public interface function to start training process; expects 2D list with
-# binary features as input
+# public interface function to training a classifer; expects 2D list with binary features as input
 def train(parsed_training_data):
     class_counts = {}
     first_class = parsed_training_data[1][1]
@@ -42,8 +41,59 @@ def train(parsed_training_data):
         detail_tuple[2] = detail_tuple[2] / class_counts[second_class]
 
     # create new instance of Classifier and populate with classifier details
-    classifier = Classifier.Classifier("nb", (first_class, second_class), classifier_features)
+    class_name_counts = ((first_class, class_counts[first_class]), (second_class, class_counts[second_class]))
+    classifier = Classifier.Classifier("nb", class_name_counts, classifier_features)
     for detail in classifier_details:
         classifier.add_classifier_detail(detail)
 
     return classifier
+
+# public interface function to classify data; expects 2D list with binary features as input and a classifier object
+def classify(parsed_test_data, classifier):
+    results = []
+    classifier_details = classifier.get_classifier_details()
+    first_class_count = classifier.get_class_names_counts()[0]
+    second_class_count = classifier.get_class_names_counts()[1]
+
+    # calculate the probability that a record is in the first class or the second class
+    total_count = first_class_count[1] + second_class_count[1]
+    first_class_prob = first_class_count[1] / total_count
+    second_class_prob = second_class_count[1] / total_count
+
+    for row in parsed_test_data[1:]:
+        # initialize the list of probabilities that the row belongs to the first or second classes by adding the overall
+        # probability of a record belonging to that class
+        first_class_prob_list = [first_class_prob]
+        second_class_prob_list = [second_class_prob]
+
+        for i in range(0, len(classifier_details)):
+            feature = row[i+1]
+            if feature:
+                first_class_feature_prob = classifier_details[i][1]
+                second_class_feature_prob = classifier_details[i][1]
+                first_class_prob_list.append(first_class_feature_prob)
+                second_class_prob_list.append(second_class_feature_prob)
+            else:
+                first_class_feature_prob = 1 / classifier_details[i][1]
+                second_class_feature_prob = 1 / classifier_details[i][1]
+                first_class_prob_list.append(first_class_feature_prob)
+                second_class_prob_list.append(second_class_feature_prob)
+
+        # calculate probability that record belongs to the first class by multiplying all probability terms
+        first_class_calc_prob = 1
+        for prob in first_class_prob_list:
+            first_class_calc_prob = first_class_calc_prob * prob
+
+        # calculate probability that record belongs to the second class by multiplying all probability terms
+        second_class_calc_prob = 1
+        for prob in second_class_prob_list:
+            second_class_calc_prob = second_class_calc_prob * prob
+
+        if first_class_calc_prob > second_class_calc_prob:
+            record_class = (row[0], first_class_count[0])
+            results.append(record_class)
+        else:
+            record_class = (row[0], second_class_count[0])
+            results.append(record_class)
+
+    return results
