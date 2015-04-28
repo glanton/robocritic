@@ -7,6 +7,11 @@ import trainer
 
 # external imports
 import csv
+import os
+
+
+# available algorithms
+_algorithms = ["nb", "rf"]
 
 
 # function that reads a CSV file and returns it as a list of lists (each row is an element in the outer list and each
@@ -29,15 +34,54 @@ def _write_csv(filename, results):
         writer.writerows(results)
 
 
+# validates command terms for the train command, returning True if validation passes and False if it fails
+def _validate_train_commands(command_list):
+
+    # check that correct number of commands (3) were given
+    if len(command_list) == 3:
+
+        # check that an available algorithm was selected
+        if command_list[1] in _algorithms:
+
+            # check that specified file exists
+            if os.path.exists("input_data/" + command_list[2]):
+                return True
+            else:
+                print("Training data file not found")
+        else:
+            print("Unavailable algorithm specified; should be nb or rf")
+    else:
+        print("Incorrect number of command terms; should be exactly three (e.g. train rf my_data.csv)")
+        print("Filename must not contain spaces")
+
+    # if any command validation did not pass, return False
+    return False
+
+
 # function that orders the training process, calling parser before the trainer
-def _train():
-    training_data = _read_csv("input_data/training_split_8000.csv")
-    parsed_training_data = parser.prepare_training_data(training_data)
-    classifier = trainer.train(parsed_training_data, "nb")
+def _train(command_list):
 
-    _write_csv("output_data/classifier_details.csv", classifier.classifier_details)
+    # validate command list
+    if _validate_train_commands(command_list):
+        algorithm = command_list[1]
+        filename = "input_data/" + command_list[2]
 
-    return classifier
+        # read training data from csv
+        training_data = _read_csv(filename)
+
+        # parse training data to build features and build classifier, catching errors returned by parser
+        parsed_training_data = parser.prepare_training_data(training_data)
+        if type(parsed_training_data) is str:
+            return None
+        else:
+            classifier = trainer.train(parsed_training_data, algorithm)
+
+            # debugging output of classifier details
+            _write_csv("output_data/classifier_details.csv", classifier.classifier_details)
+
+            return classifier
+    else:
+        return None
 
 
 # function that orders the classification process, calling parser before the classifier
@@ -59,14 +103,16 @@ def _classify(classifier):
 # interface command loop; controls what interface-level functions the user can call
 def _command_loop(current_classifier):
     command = input("command: ")
+    command_list = command.split(" ")
 
-    if command == "train":
-        print("Training initiated...")
-        current_classifier = _train()
-    elif command == "classify":
-        print("Classification commenced...")
+    # match on first term of command list and pass the terms forward
+    if command_list[0] == "train":
+        print("Training selected...")
+        current_classifier = _train(command_list)
+    elif command_list[0] == "classify":
+        print("Classification selected...")
         results = _classify(current_classifier)
-    elif command == "quit":
+    elif command_list[0] == "quit":
         print("Robocritic quitting...")
         raise SystemExit
     else:
@@ -79,9 +125,9 @@ def _command_loop(current_classifier):
 # starts up with welcome/help text and begins the command loop
 def startup():
     print("\n")
-    print("I am Robocritic.")
-    print("You may command me thus.")
-    print("train | classify | save | load | quit")
-    print("--------------------------------------------")
+    print("Robocritic initialized.")
+    print("Command line active:")
+    print("train (nb | rf) file_name  ||  classify  ||  quit")
+    print("-------------------------------------------------")
 
     _command_loop(None)

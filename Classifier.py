@@ -14,6 +14,10 @@ class Classifier:
     def add_classifier_detail(self, detail):
         self.classifier_details.append(detail)
 
+    # returns the two-letter string indicating the algorithm used by this classifier
+    def get_algorithm(self):
+        return self.algorithm
+
     # returns the tuple of (class name, count) tuples used by this classifier
     def get_class_names_counts(self):
         return self.class_names_counts
