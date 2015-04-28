@@ -5,6 +5,7 @@
 import nb
 import rf
 
+
 # public interface for trainer; returns a classifier object based on training data
 def train(parsed_training_data, algorithm):
     print("Training classifier...")

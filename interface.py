@@ -72,6 +72,7 @@ def _train(command_list):
         # parse training data to build features and build classifier, catching errors returned by parser
         parsed_training_data = parser.prepare_training_data(training_data)
         if type(parsed_training_data) is str:
+            print(parsed_training_data)
             return None
         else:
             classifier = trainer.train(parsed_training_data, algorithm)
