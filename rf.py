@@ -58,14 +58,14 @@ def train(parsed_training_data):
             sc_has_vote = 0
             fc_has_not_vote = 0
             sc_has_not_vote = 0
-            for row in training_data_cut:
-                if row[skip_index]:
-                    if row[1] == first_class:
+            for boot_row in training_data_cut:
+                if boot_row[skip_index]:
+                    if boot_row[1] == first_class:
                         fc_has_vote += 1
                     else:
                         sc_has_vote += 1
                 else:
-                    if row[1] == first_class:
+                    if boot_row[1] == first_class:
                         fc_has_not_vote += 1
                     else:
                         sc_has_not_vote += 1
@@ -96,10 +96,13 @@ def train(parsed_training_data):
             # calculate entropy of left (has) and right (has not) children
             child_left_entropy = _calculate_entropy(fc_has_vote, sc_has_vote)
             child_right_entropy = _calculate_entropy(fc_has_not_vote, sc_has_not_vote)
-            child_entropy = (((fc_has_vote + sc_has_vote) / parent_votes) * child_left_entropy +
-                             ((fc_has_not_vote + sc_has_not_vote) / parent_votes) * child_right_entropy)
 
-            # calculate information gain
+            # calculate proportion of votes in left and right children
+            child_left_prop = (fc_has_vote + sc_has_vote) / parent_votes
+            child_right_prop = (fc_has_not_vote + sc_has_not_vote) / parent_votes
+
+            # calculate child entropy and information gain
+            child_entropy = child_left_prop * child_left_entropy + child_right_prop * child_right_entropy
             information_gain = parent_entropy - child_entropy
 
             # compare with current best information gain
@@ -127,10 +130,10 @@ def train(parsed_training_data):
 
         # if training data falls below a preset threshold or the vote is unanimous build a Leaf node;
         # otherwise split data on feature and build a Tree node
-        fc_has_vote = features_and_votes[1][0]
-        sc_has_vote = features_and_votes[1][1]
-        fc_has_not_vote = features_and_votes[2][0]
-        sc_has_not_vote = features_and_votes[2][1]
+        fc_has_vote = feature_and_votes[1][0]
+        sc_has_vote = feature_and_votes[1][1]
+        fc_has_not_vote = feature_and_votes[2][0]
+        sc_has_not_vote = feature_and_votes[2][1]
 
         # build left (has feature) branch
         if len(training_data_cut) < _leaf_threshold or fc_has_vote == 0 or sc_has_vote == 0:
@@ -139,11 +142,11 @@ def train(parsed_training_data):
         else:
             # split out and build Tree
             has_feature_data = []
-            for row in training_data_cut:
+            for tree_row in training_data_cut:
                 # add 2 to feature index to skip RECORD and CLASS columns
-                feature_index = features_and_votes[0][1] + 2
-                if row[feature_index]:
-                    has_feature_data.append(row)
+                feature_index = feature_and_votes[0][1] + 2
+                if tree_row[feature_index]:
+                    has_feature_data.append(tree_row)
 
             # recurse into the left branch building the tree of data that has feature
             left_branch = _rec_build_random_tree(has_feature_data)
@@ -155,11 +158,11 @@ def train(parsed_training_data):
         else:
             # split out and build Tree
             has_not_feature_data = []
-            for row in training_data_cut:
+            for tree_row in training_data_cut:
                 # add 2 to feature index to skip RECORD and CLASS columns
-                feature_index = features_and_votes[0][1] + 2
-                if not row[feature_index]:
-                    has_not_feature_data.append(row)
+                feature_index = feature_and_votes[0][1] + 2
+                if not tree_row[feature_index]:
+                    has_not_feature_data.append(tree_row)
 
             # recurse into the right branch building the tree of data without feature
             right_branch = _rec_build_random_tree(has_not_feature_data)
