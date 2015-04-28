@@ -1,4 +1,4 @@
-# the classifier class; built by running an classification algorithm on the training data set
+# the Classifier class; built by running an classification algorithm on the training data set
 
 
 class Classifier:
