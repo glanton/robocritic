@@ -17,19 +17,33 @@ class Node:
 class Tree(Node):
 
     # requires the splitting feature, left branch (has feature), and right branch (does not have feature)
-    def __init__(self, feature, left, right):
+    def __init__(self, feature_and_index, left, right):
         Node.__init__(self, "tree")
-        self.feature = feature
+        self.feature_and_index = feature_and_index
         self.left = left
         self.right = right
+
+    # get the Tree's feature and index tuple
+    def get_feature_and_index(self):
+        return self.feature_and_index
+
+    # get the Tree's left branch
+    def get_left(self):
+        return self.left
+
+    # get the Tree's right branch
+    def get_right(self):
+        return self.right
 
 
 # a terminal node with class "vote" data
 class Leaf(Node):
 
-    # requires the first class and second class counts
-    def __init__(self, fc_count, sc_count):
+    # requires a tuple of the first class and second class votes
+    def __init__(self, fc_and_sc_votes):
         Node.__init__(self, "leaf")
-        self.fc_count = fc_count
-        self.sc_count = sc_count
+        self.fc_and_sc_votes = fc_and_sc_votes
 
+    # get the Leaf's first and second class votes
+    def get_votes(self):
+        return self.fc_and_sc_votes

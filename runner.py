@@ -1,7 +1,8 @@
 # runs a classifier on data passed in and returns classified data
 
-# internal import
+# internal imports
 import nb
+import rf
 
 
 # public interface for runner; returns a list of lists (classified data)

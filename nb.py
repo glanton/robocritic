@@ -1,4 +1,5 @@
 # implementation of the Naive Bayes algorithm
+# to keep things more readable, "fc" is used to indicate "first class", and "sc" to indicate "second class"
 
 # internal import
 import Classifier
@@ -59,18 +60,24 @@ def train(parsed_training_data):
     return classifier
 
 
-# calculate the probability of a class by multiplying along a list of individual feature probabilities
-def _calculate_probability(feature_prob_list):
-    calc_prob = 1
-    for prob in feature_prob_list:
-        calc_prob = calc_prob * prob
-
-    return calc_prob
-
-
 # public interface function to classify data; expects 2D list with binary features as input and a classifier object
-# to keep things more readable, "fc" is used to indicate "first class", and "sc" to indicate "second class"
 def classify(parsed_test_data, classifier):
+
+    # HELPER FUNCTION for classify function
+    # -----------------------------------
+
+    # calculate the probability of a class by multiplying along a list of individual feature probabilities
+    def _calculate_probability(feature_prob_list):
+        calc_prob = 1
+        for prob in feature_prob_list:
+            calc_prob = calc_prob * prob
+
+        return calc_prob
+
+    # ----------------------------------
+    # MAIN CODE for classify function
+    # ----------------------------------
+
     # get class names and counts from classifier
     fc_name = classifier.get_class_names_counts()[0][0]
     fc_count = classifier.get_class_names_counts()[0][1]

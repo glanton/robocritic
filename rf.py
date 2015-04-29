@@ -1,4 +1,5 @@
 # implementation of the Random Forest algorithm
+# to keep things more readable, "fc" is used to indicate "first class", and "sc" to indicate "second class"
 
 # internal imports
 import Classifier
@@ -157,7 +158,7 @@ def train(parsed_training_data):
         # build right (has not feature) branch
         if len(training_data_cut) < _leaf_threshold or fc_has_not_vote == 0 or sc_has_not_vote == 0:
             # build Leaf based on votes
-            right_branch = DecisionTree.Leaf(fc_has_not_vote, sc_has_not_vote)
+            right_branch = DecisionTree.Leaf((fc_has_not_vote, sc_has_not_vote))
         else:
             # split out and build Tree
             has_not_feature_data = []
@@ -228,9 +229,74 @@ def train(parsed_training_data):
 
 
 # public interface function to classify data; expects 2D list with binary features as input and a classifier object
-# to keep things more readable, "fc" is used to indicate "first class", and "sc" to indicate "second class"
 def classify(parsed_test_data, classifier):
 
+    # HELPER FUNCTION for classify function
+    # -----------------------------------
+
+    # recursively run through the given decision tree until reaching a terminal Leaf node; current_row is expected
+    # without RECORD column (meaning that its feature index matches the classifier's feature list)
+    def _rec_run_decision_tree(tree, current_row):
+
+        # check node type of tree; if Tree recurse further, if Leaf return votes
+        if tree.get_node_type() == "tree":
+            # get the index of the Tree node's splitting feature
+            feature_and_index = tree.get_feature_and_index()
+            index = feature_and_index[1]
+
+            # if the row has the feature, recurse left (has branch), otherwise recurse right (has not branch)
+            if current_row[index]:
+                left_branch = tree.get_left()
+                _rec_run_decision_tree(left_branch, current_row)
+            else:
+                right_branch = tree.get_right()
+                _rec_run_decision_tree(right_branch, current_row)
+        # if node is Leaf
+        else:
+            leaf_votes = tree.get_votes()
+
+            return leaf_votes
+
+    # ----------------------------------
+    # MAIN CODE for train function
+    # ----------------------------------
+
+    # get class names and counts from classifier
+    fc_name = classifier.get_class_names_counts()[0][0]
+    fc_count = classifier.get_class_names_counts()[0][1]
+    sc_name = classifier.get_class_names_counts()[1][0]
+    sc_count = classifier.get_class_names_counts()[1][1]
+
+    # build results by running each row through the classifier's decision trees
     results = []
+    classifier_details = classifier.get_classifier_details()
+    for row in parsed_test_data[1:]:
+        # variables to hold the total first and second class votes across all decision trees
+        fc_total_votes = 0
+        sc_total_votes = 0
+
+        for detail in classifier_details:
+
+            # get tuple of first and second class votes from detail decision tree
+            fc_and_sc_votes = _rec_run_decision_tree(detail, row[1:])
+
+            # pull out class votes and add votes to total tallies
+            fc_vote = fc_and_sc_votes[0]
+            sc_vote = fc_and_sc_votes[1]
+            fc_total_votes += fc_vote
+            sc_total_votes += sc_vote
+
+        # calculate more probable class (the one that received more total votes)
+        # if votes are equal, assign the overall most probable class
+        record = row[0]
+        if fc_total_votes > sc_total_votes:
+            results.append((record, fc_name))
+        elif sc_total_votes > fc_total_votes:
+            results.append((record, sc_name))
+        else:
+            if fc_count > sc_count:
+                results.append((record, fc_name))
+            else:
+                results.append((record, sc_name))
 
     return results
