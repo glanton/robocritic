@@ -14,7 +14,7 @@ import string
 _max_features = 10000
 
 # the minimum ratio of word's occurrence to the number of training records (occurrences / number of records)
-_min_occ_ratio = 0.0005
+_min_occ_ratio = 0.001
 
 
 # build the complete dictionary of words found in the data and count the occurrences of each word

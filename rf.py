@@ -27,10 +27,13 @@ def train(parsed_training_data):
 
     # calculate the entropy in a set of data with two classes
     def _calculate_entropy(fc_count, sc_count):
-        fc_prob = fc_count / sc_count
-        sc_prob = 1 - fc_prob
+        if fc_count == 0 or sc_count == 0:
+            entropy = 0
+        else:
+            fc_prob = fc_count / (fc_count + sc_count)
+            sc_prob = 1 - fc_prob
 
-        entropy = -fc_prob * math.log2(fc_prob) - sc_prob * math.log2(sc_prob)
+            entropy = -fc_prob * math.log2(fc_prob) - sc_prob * math.log2(sc_prob)
 
         return entropy
 
@@ -40,10 +43,10 @@ def train(parsed_training_data):
 
         # pick a number of random samples up to the length of classifier features, but no more than _max_sample
         features_length = len(classifier_features)
-        sample_number = features_length if features_length < _max_sample else _max_sample
+        sample_number = (features_length / 10) if (features_length / 10) < _max_sample else _max_sample
         sample_feature_list = []
         for k in range(0, sample_number):
-            feature_index = random.randint(0, features_length)
+            feature_index = random.randint(0, (features_length - 1))
             sample_feature_list.append(feature_index)
 
         # for each sampled feature, split the training data on that feature, count the votes of the resulting class
@@ -195,10 +198,18 @@ def train(parsed_training_data):
             second_class = class_name
             class_counts[class_name] = 1
 
+    # count for debugging purposes
+    count = 0
+
     # build as many random decision trees as features up to the max
     classifier_details = []
     tree_count = len(classifier_features) if len(classifier_features) < _max_trees else _max_trees
     for i in range(0, tree_count):
+
+        # print count and increment for debugging purposes
+        if count % 10 == 0:
+            print("rf.train: " + str(count))
+        count += 1
 
         # build a random decision tree by passing parsed training data (without headers) and list of classifier features
         # to recursive build function

@@ -27,7 +27,7 @@ def _read_csv(filename):
     return csv_data
 
 
-# write a CSV file with the results of the most recent test data classification
+# write a CSV file with the results of the most recent test data classification (can also write other sequenced data)
 def _write_csv(filename, results):
     with open(filename, "w") as f:
         writer = csv.writer(f)
@@ -77,28 +77,63 @@ def _train(command_list):
         else:
             classifier = trainer.train(parsed_training_data, algorithm)
 
+            print("Training complete")
+
             # debugging output of classifier details
-            _write_csv("output_data/classifier_details.csv", classifier.classifier_details)
+            # currently only works for naive Bayes... need tree-to-string to print random forest
+            # _write_csv("output_data/classifier_details.csv", classifier.classifier_details)
 
             return classifier
     else:
         return None
 
 
-# function that orders the classification process, calling parser before the classifier
-def _classify(classifier):
-    results = ""
+# validates command terms for the train command, returning True if validation passes and False if it fails
+def _validate_classify_commands(command_list):
 
-    if classifier:
-        test_data = _read_csv("input_data/test_split_2000.csv")
-        parsed_test_data = parser.prepare_test_data(test_data, classifier)
-        results = runner.classify(parsed_test_data, classifier)
+    # check that correct number of commands (2) were given
+    if len(command_list) == 2:
 
-        _write_csv("output_data/classified_test_data.csv", results)
+        # check that specified file exists
+        if os.path.exists("input_data/" + command_list[1]):
+            return True
+        else:
+            print("Test data file not found")
     else:
-        print("No classifier loaded")
+        print("Incorrect number of command terms; should be exactly two (e.g. classify my_data.csv)")
+        print("Filename must not contain spaces")
 
-    return results
+    # if any command validation did not pass, return False
+    return False
+
+
+# function that orders the classification process, calling parser before the classifier
+def _classify(command_list, classifier):
+
+    # validate command list
+    if _validate_classify_commands(command_list):
+        filename = "input_data/" + command_list[1]
+
+        # check that classifier is loaded
+        if classifier:
+
+            # read test data from csv
+            test_data = _read_csv(filename)
+
+            # parse test data to build features and classify; catching errors returned by parser
+            parsed_test_data = parser.prepare_test_data(test_data, classifier)
+            if type(parsed_test_data) is str:
+                print(parsed_test_data)
+            else:
+                results = runner.classify(parsed_test_data, classifier)
+
+                # output classified test data to csv
+                print("Classification complete and output to classified_test_data.csv")
+                _write_csv("output_data/classified_test_data.csv", results)
+        else:
+            print("No classifier loaded")
+
+    return None
 
 
 # interface command loop; controls what interface-level functions the user can call
@@ -112,7 +147,7 @@ def _command_loop(current_classifier):
         current_classifier = _train(command_list)
     elif command_list[0] == "classify":
         print("Classification selected...")
-        results = _classify(current_classifier)
+        _classify(command_list, current_classifier)
     elif command_list[0] == "quit":
         print("Robocritic quitting...")
         raise SystemExit
@@ -128,7 +163,7 @@ def startup():
     print("\n")
     print("Robocritic initialized.")
     print("Command line active:")
-    print("train (nb | rf) file_name  ||  classify  ||  quit")
+    print("train (nb | rf) file_name.csv  ||  classify file_name.csv  ||  quit")
     print("-------------------------------------------------")
 
     _command_loop(None)
