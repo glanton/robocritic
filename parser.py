@@ -4,6 +4,9 @@
 #   2) unclassified test data consisting of a sentence
 # returns data, now with features
 
+# internal import
+import debug
+
 # external imports
 import nltk
 import operator
@@ -11,10 +14,11 @@ import string
 
 
 # the maximum number of words that can be used as features (if reached included words will have greater occurrence)
-_max_features = 10000
+_max_features = 20000
 
 # the minimum ratio of word's occurrence to the number of training records (occurrences / number of records)
-_min_occ_ratio = 0.001
+# nb ideal: _min_occ_ratio = 0.0005
+_min_occ_ratio = 0.0005
 
 
 # build the complete dictionary of words found in the data and count the occurrences of each word
@@ -62,23 +66,19 @@ def _build_featured_data(validated_data, feature_list):
     header_row.extend(feature_list)
     featured_data.append(header_row)
 
-    # count for debugging purposes
-    count = 0
-
     # build data rows, checking each feature against each record's list of words; a 1 in the matching column means the
     # feature exists; a 0 means that it does not (columns will be either RECORD, CLASS, [FEATURE_0], [FEATURE_1], etc.
     # in the case of training data or RECORD, [FEATURE_0], [FEATURE_1], etc. in the case of test data; thus if a record
     # has FEATURE_1 and is training data the value of the 4th item in that row's list would be 1
     for row in validated_data[1:]:
 
-        # print count and increment for debugging purposes
-        if count % 100 == 0:
-            print("_build_featured_data: " + str(count))
-        count += 1
+        # debug counter
+        debug.run_counter("parser._build_featured_data", 100)
 
+        # tokenize the record's words and dump them in a set to increase lookup speed
         row_feature_list = []
-
-        words = nltk.word_tokenize(row[0])
+        words_list = nltk.word_tokenize(row[0])
+        words = set(words_list)
         for feature in feature_list:
             if feature in words:
                 row_feature_list.append(1)
@@ -124,19 +124,19 @@ def _manage_test_parse(validated_data, classifier):
 # validates whether a class has been assigned to each record, and whether exactly 2 classes have been used
 # returns True if classes are incorrect
 def _classes_incorrect(unparsed_data):
-    class_list = []
+    class_set = set()
 
-    # for each class in data, make sure that it is one of exactly 2 classes
+    # for each class in data, count unique classes until one over 2 (too many classes found)
     for row in unparsed_data[1:]:
         class_name = row[1]
-        if class_name not in class_list:
-            if len(class_list) < 2:
-                class_list.append(class_name)
+        if class_name not in class_set:
+            if len(class_set) <= 2:
+                class_set.add(class_name)
             else:
                 return True
 
     # make sure that at exactly 2 classes were found
-    if len(class_list) == 2:
+    if len(class_set) == 2:
         return False
     else:
         return True

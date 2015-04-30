@@ -4,6 +4,7 @@
 # internal imports
 import Classifier
 import DecisionTree
+import debug
 
 # external imports
 import math
@@ -11,13 +12,16 @@ import random
 
 
 # the maximum number of random decision trees to train
-_max_trees = 1000
+_max_trees = 50
 
-# bootstrap aggregation (bagging) sample size
-_max_sample = 100
+# the maximum number of random features to sample
+_max_sample = 200
 
 # the minimum number of records required to build another Tree node; otherwise force a Leaf node
 _leaf_threshold = 5
+
+# the maximum number of times a tree can recurse into new branches when growing (1000 is Python's default internal max)
+_rec_limit = 100
 
 
 # public interface function to training a classifier; expects 2D list with binary features as input
@@ -26,7 +30,7 @@ def train(parsed_training_data):
     # HELPER FUNCTIONS for train function
     # -----------------------------------
 
-    # calculate the entropy in a set of data with two classes
+    # calculate the information entropy in a set of data with two classes
     def _calculate_entropy(fc_count, sc_count):
         if fc_count == 0 or sc_count == 0:
             entropy = 0
@@ -38,15 +42,16 @@ def train(parsed_training_data):
 
         return entropy
 
-    # function to take a bootstrap sample of features from provided training data and find the feature to split on
+    # function to take a random sample of features from provided training data and find the feature to split on
     # that provides the greatest information gain
-    def _find_best_bootstrap_feature(training_data_cut):
+    def _find_best_sampled_feature(training_data_cut):
 
-        # pick a number of random samples up to the length of classifier features, but no more than _max_sample
+        # pick a number of random samples up to square root length of classifier features, but no more than _max_sample
         features_length = len(classifier_features)
-        sample_number = (features_length / 10) if (features_length / 10) < _max_sample else _max_sample
+        sqrt_features = math.ceil(math.sqrt(features_length))
+        sample_feature_size = sqrt_features if sqrt_features < _max_sample else _max_sample
         sample_feature_list = []
-        for k in range(0, sample_number):
+        for j in range(0, sample_feature_size):
             feature_index = random.randint(0, (features_length - 1))
             sample_feature_list.append(feature_index)
 
@@ -62,14 +67,14 @@ def train(parsed_training_data):
             sc_has_vote = 0
             fc_has_not_vote = 0
             sc_has_not_vote = 0
-            for boot_row in training_data_cut:
-                if boot_row[skip_index]:
-                    if boot_row[1] == first_class:
+            for find_row in training_data_cut:
+                if find_row[skip_index]:
+                    if find_row[1] == first_class:
                         fc_has_vote += 1
                     else:
                         sc_has_vote += 1
                 else:
-                    if boot_row[1] == first_class:
+                    if find_row[1] == first_class:
                         fc_has_not_vote += 1
                     else:
                         sc_has_not_vote += 1
@@ -105,7 +110,7 @@ def train(parsed_training_data):
             child_left_prop = (fc_has_vote + sc_has_vote) / parent_votes
             child_right_prop = (fc_has_not_vote + sc_has_not_vote) / parent_votes
 
-            # calculate child entropy and information gain
+            # calculate overall child entropy and information gain
             child_entropy = child_left_prop * child_left_entropy + child_right_prop * child_right_entropy
             information_gain = parent_entropy - child_entropy
 
@@ -126,23 +131,28 @@ def train(parsed_training_data):
         return return_data
 
     # recursive function for building a random decision tree based on the provided cut of training data
-    def _rec_build_random_tree(training_data_cut):
+    def _rec_build_random_tree(training_data_cut, rec_count):
+        # increase recursion count by 1
+        rec_count += 1
 
-        # find the feature to split the data that provides greatest information gain from a bootstrap sample
+        # find the feature to split the data that provides greatest information gain from a random sample
         # returns tuple ((feature_name, feature_index), (fc_has_vote, sc_has_vote), (fc_has_not_vote, sc_has_not_vote))
-        feature_and_votes = _find_best_bootstrap_feature(training_data_cut)
+        feature_and_votes = _find_best_sampled_feature(training_data_cut)
 
         # if training data falls below a preset threshold or the vote is unanimous build a Leaf node;
-        # otherwise split data on feature and build a Tree node
+        # otherwise split data on feature and build a Tree node; also enforce a recursion limit
         fc_has_vote = feature_and_votes[1][0]
         sc_has_vote = feature_and_votes[1][1]
         fc_has_not_vote = feature_and_votes[2][0]
         sc_has_not_vote = feature_and_votes[2][1]
 
+        # length of training data cut
+        cut_length = len(training_data_cut)
+
         # build left (has feature) branch
-        if len(training_data_cut) < _leaf_threshold or fc_has_vote == 0 or sc_has_vote == 0:
+        if cut_length < _leaf_threshold or fc_has_vote == 0 or sc_has_vote == 0 or rec_count > _rec_limit:
             # build Leaf based on votes
-            left_branch = DecisionTree.Leaf(fc_has_vote, sc_has_vote)
+            left_branch = DecisionTree.Leaf((fc_has_vote, sc_has_vote))
         else:
             # split out and build Tree
             has_feature_data = []
@@ -153,10 +163,10 @@ def train(parsed_training_data):
                     has_feature_data.append(tree_row)
 
             # recurse into the left branch building the tree of data that has feature
-            left_branch = _rec_build_random_tree(has_feature_data)
+            left_branch = _rec_build_random_tree(has_feature_data, rec_count)
 
         # build right (has not feature) branch
-        if len(training_data_cut) < _leaf_threshold or fc_has_not_vote == 0 or sc_has_not_vote == 0:
+        if cut_length < _leaf_threshold or fc_has_not_vote == 0 or sc_has_not_vote == 0 or rec_count > _rec_limit:
             # build Leaf based on votes
             right_branch = DecisionTree.Leaf((fc_has_not_vote, sc_has_not_vote))
         else:
@@ -169,7 +179,7 @@ def train(parsed_training_data):
                     has_not_feature_data.append(tree_row)
 
             # recurse into the right branch building the tree of data without feature
-            right_branch = _rec_build_random_tree(has_not_feature_data)
+            right_branch = _rec_build_random_tree(has_not_feature_data, rec_count)
 
         # build tree with splitting feature name and index, and the left and right branches
         feature_name_index = feature_and_votes[0]
@@ -199,22 +209,24 @@ def train(parsed_training_data):
             second_class = class_name
             class_counts[class_name] = 1
 
-    # count for debugging purposes
-    count = 0
-
-    # build as many random decision trees as features up to the max
+    # build n random decision trees, where n is the length of the data, up to the max
     classifier_details = []
-    tree_count = len(classifier_features) if len(classifier_features) < _max_trees else _max_trees
+    training_data_length = len(parsed_training_data[1:])
+    tree_count = training_data_length if training_data_length < _max_trees else _max_trees
     for i in range(0, tree_count):
 
-        # print count and increment for debugging purposes
-        if count % 10 == 0:
-            print("rf.train: " + str(count))
-        count += 1
+        # debug counter
+        debug.run_counter("rf.train", 10)
 
-        # build a random decision tree by passing parsed training data (without headers) and list of classifier features
+        # bootstrap training data, taking random sample of rows (with replacement) equal to the length of training data
+        bootstrap_data = []
+        for k in range(0, training_data_length):
+            row_index = random.randint(0, (training_data_length - 1)) + 1
+            bootstrap_data.append(parsed_training_data[row_index])
+
+        # build a random decision tree by passing bootstrapped data (without headers) and list of classifier features
         # to recursive build function
-        random_decision_tree = _rec_build_random_tree(parsed_training_data[1:])
+        random_decision_tree = _rec_build_random_tree(bootstrap_data, 0)
 
         # add tree to classifier details
         classifier_details.append(random_decision_tree)
@@ -247,14 +259,12 @@ def classify(parsed_test_data, classifier):
             # if the row has the feature, recurse left (has branch), otherwise recurse right (has not branch)
             if current_row[index]:
                 left_branch = tree.get_left()
-                _rec_run_decision_tree(left_branch, current_row)
+                return _rec_run_decision_tree(left_branch, current_row)
             else:
                 right_branch = tree.get_right()
-                _rec_run_decision_tree(right_branch, current_row)
-        # if node is Leaf
+                return _rec_run_decision_tree(right_branch, current_row)
         else:
             leaf_votes = tree.get_votes()
-
             return leaf_votes
 
     # ----------------------------------
@@ -271,10 +281,15 @@ def classify(parsed_test_data, classifier):
     results = []
     classifier_details = classifier.get_classifier_details()
     for row in parsed_test_data[1:]:
+
+        # debug counter
+        debug.run_counter("rf.classify", 10)
+
         # variables to hold the total first and second class votes across all decision trees
         fc_total_votes = 0
         sc_total_votes = 0
 
+        # run the row through each decision tree in the classifier
         for detail in classifier_details:
 
             # get tuple of first and second class votes from detail decision tree

@@ -3,6 +3,7 @@
 
 # internal import
 import Classifier
+import debug
 
 
 # public interface function to training a classifier; expects 2D list with binary features as input
@@ -18,17 +19,12 @@ def train(parsed_training_data):
         classifier_details.append(detail_list)
         classifier_features.append(feature)
 
-    # count for debugging purposes
-    count = 0
-
     # capture the two class names and count their totals
     class_counts = {}
     for row in parsed_training_data[1:]:
 
-        # print count and increment for debugging purposes
-        if count % 100 == 0:
-            print("nb.train: " + str(count))
-        count += 1
+        # debug counter
+        debug.run_counter("nb.train", 10)
 
         # count the occurrences of each class and add to the class counts dictionary
         class_name = row[1]
@@ -93,6 +89,10 @@ def classify(parsed_test_data, classifier):
     results = []
     classifier_details = classifier.get_classifier_details()
     for row in parsed_test_data[1:]:
+
+        # debug counter
+        debug.run_counter("nb.classify", 10)
+
         # feature-by-feature lists of probabilities that the record belongs to the first or second classes
         # first probability in the lists is the overall probability that a record belongs to that class
         fc_feature_prob_list = [fc_prob]
