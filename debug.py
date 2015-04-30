@@ -20,3 +20,9 @@ def run_counter(name, frequency):
     else:
         print(name + ": 0")
         _count_dict[name] = 1
+
+
+# resets a counter so that it can be used again
+def reset_counter(name):
+    if name in _count_dict:
+        _count_dict[name] = 0

@@ -90,6 +90,9 @@ def _build_featured_data(validated_data, feature_list):
         current_row.extend(row_feature_list)
         featured_data.append(current_row)
 
+    # reset the debug counter since this function will be called again for classification
+    debug.reset_counter("parser._build_featured_data")
+
     return featured_data
 
 

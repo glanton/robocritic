@@ -128,8 +128,8 @@ def _classify(command_list, classifier):
                 results = runner.classify(parsed_test_data, classifier)
 
                 # output classified test data to csv
-                print("Classification complete and output to classified_test_data.csv")
-                _write_csv("output_data/classified_test_data.csv", results)
+                print("Classification complete and output to classified_data.csv")
+                _write_csv("output_data/classified_data.csv", results)
         else:
             print("No classifier loaded")
 
