@@ -149,17 +149,17 @@ def _classes_incorrect(unparsed_data):
 # is not formatted correctly returns a descriptive error in a string for the interface to handle
 def prepare_training_data(unparsed_data):
     if not unparsed_data:
-        return "input data is empty"
+        return "< input data is empty >"
     elif len(unparsed_data[0]) < 2:
-        return "input data columns missing; should be exactly 2"
+        return "< input data columns missing; should be exactly 2 >"
     elif len(unparsed_data[0]) > 2:
-        return "input data too many columns; should be exactly 2"
+        return "< input data has too many columns; should be exactly 2 >"
     elif (unparsed_data[0][0] != "RECORD") or (unparsed_data[0][1] != "CLASS"):
-        return "input data headers incorrect; should be 'RECORD', 'CLASS'"
+        return "< input data headers incorrect; should be 'RECORD', 'CLASS' >"
     elif not unparsed_data[1]:
-        return "input data missing records"
+        return "< input data missing records >"
     elif _classes_incorrect(unparsed_data):
-        return "input data classes are inconsistent; each record should be assigned 1 of exactly 2 classes"
+        return "< input data classes are inconsistent; each record should be assigned 1 of exactly 2 classes >"
     else:
         print("Parsing training data...")
         return _manage_training_parse(unparsed_data)
@@ -169,11 +169,11 @@ def prepare_training_data(unparsed_data):
 # is not formatted correctly returns a descriptive error in a string for the interface to handle
 def prepare_test_data(unparsed_data, classifier):
     if not unparsed_data:
-        return "input data is empty"
+        return "< input data is empty >"
     elif len(unparsed_data[0]) > 1:
-        return "input data too many columns; should be exactly 1"
+        return "< input data has too many columns; should be exactly 1 >"
     elif unparsed_data[0][0] != "RECORD":
-        return "input data header incorrect; should be 'RECORD'"
+        return "< input data header incorrect; should be 'RECORD' >"
     else:
         print("Parsing test data...")
         return _manage_test_parse(unparsed_data, classifier)

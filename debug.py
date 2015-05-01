@@ -14,7 +14,7 @@ def run_counter(name, frequency):
         # print count and increment
         count = _count_dict[name]
         if count % frequency == 0:
-            print(name + ": " + str(count))
+            print(" - " + name + ": " + str(count))
         _count_dict[name] += 1
     # otherwise create new counter
     else:

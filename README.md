@@ -1,5 +1,5 @@
 # Robocritic
-Robocritic is a Python-based machine learning binary text classifier. It uses a bag-of-words approach to parse text, and either a naive Bayes or random forest for training and classification.
+Robocritic is a Python-based machine learning binary text classifier. It uses a bag-of-words approach to parse text and either a naive Bayes or random forest for training and classification.
 
 The "critic" in Robocritc is simply a reflection of the datasets used in its development. It can potentially be applied toward any binary text classification problem. Emphasis on _binary_. Training datasets with more or fewer than two classes will not pass validation.
 
@@ -30,9 +30,9 @@ Robocritic should be started by running __robocritic.py__ and uses a simple comm
 
 The command __classify__ cannot be run until a classifier has been trained. Only one trained classifier can exist at a time, and they do not persist between sessions. Once data has been classified it is output to the __output_data__ folder with the file name "classified_data.csv".
 
-All input data, whether for training or testing, must be in the format of a UTF-8 encoded CSV file.
+All input data, whether for training or testing, must be in the format of a UTF-8 encoded CSV file. Training data must have the header columns “RECORD” and “CLASS” in that order. Test data must have the single header column “RECORD”. Classified test data is output in the same order it was input, making it easy to check for accuracy.
 
-The __parser.py__ and __rf.py__ files contain parameters than can be tuned to balance accuracy and performance. As a rule the naive Bayes algorithm runs much faster, and there is no way to halt or adjust training once it has begun.
+The __parser.py__ and __rf.py__ files contain parameters than can be tuned to balance accuracy and performance. As a rule the naive Bayes algorithm runs much faster than the random forest, and there is no way to halt or adjust training once it has begun.
 
 ### Due Credit
 Robocritic is useless without training data, and could not have been tested and tuned without the following datasets:
@@ -41,7 +41,7 @@ Robocritic is useless without training data, and could not have been tested and 
 - [Large Movie Review Dataset], provided by Andrew Mass at Stanford University
 
 ### Questions
-Any questions, comments, or feedback is welcomed at [alexander_friberg@harvard.edu](mailto:alexander_friberg@harvard.edu).
+Any questions or comments are welcome at [alexander_friberg@harvard.edu](mailto:alexander_friberg@harvard.edu).
 
 [Movie Review Data]:http://www.cs.cornell.edu/people/pabo/movie-review-data/
 [Large Movie Review Dataset]:http://ai.stanford.edu/~amaas/data/sentiment/

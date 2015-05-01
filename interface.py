@@ -11,7 +11,7 @@ import os
 
 
 # available algorithms
-_algorithms = ["nb", "rf"]
+_algorithms = ["nb", "NB", "rf", "RF"]
 
 
 # function that reads a CSV file and returns it as a list of lists (each row is an element in the outer list and each
@@ -49,10 +49,10 @@ def _validate_train_commands(command_list):
             else:
                 print("Training data file not found")
         else:
-            print("Unavailable algorithm specified; should be nb or rf")
+            print("< unavailable algorithm specified; should be nb or rf >")
     else:
-        print("Incorrect number of command terms; should be exactly three (e.g. train rf my_data.csv)")
-        print("Filename must not contain spaces")
+        print("< incorrect number of command terms; should be exactly three (e.g. train rf my_data.csv) >")
+        print("< filename must not contain spaces >")
 
     # if any command validation did not pass, return False
     return False
@@ -77,7 +77,7 @@ def _train(command_list):
         else:
             classifier = trainer.train(parsed_training_data, algorithm)
 
-            print("Training complete")
+            print("...Training complete.")
 
             # debugging output of classifier details
             # currently only works for naive Bayes... need tree-to-string to print random forest
@@ -98,10 +98,10 @@ def _validate_classify_commands(command_list):
         if os.path.exists("input_data/" + command_list[1]):
             return True
         else:
-            print("Test data file not found")
+            print("< Test data file not found >")
     else:
-        print("Incorrect number of command terms; should be exactly two (e.g. classify my_data.csv)")
-        print("Filename must not contain spaces")
+        print("< incorrect number of command terms; should be exactly two (e.g. classify my_data.csv) >")
+        print("< filename must not contain spaces >")
 
     # if any command validation did not pass, return False
     return False
@@ -128,10 +128,10 @@ def _classify(command_list, classifier):
                 results = runner.classify(parsed_test_data, classifier)
 
                 # output classified test data to csv
-                print("Classification complete and output to classified_data.csv")
+                print("...Classification complete. Results output to classified_data.csv")
                 _write_csv("output_data/classified_data.csv", results)
         else:
-            print("No classifier loaded")
+            print("< no classifier loaded >")
 
     return None
 
@@ -161,9 +161,11 @@ def _command_loop(current_classifier):
 # starts up with welcome/help text and begins the command loop
 def startup():
     print("\n")
-    print("Robocritic initialized.")
-    print("Command line active:")
-    print("train (nb | rf) file_name.csv  ||  classify file_name.csv  ||  quit")
-    print("-------------------------------------------------")
+    print("                            _ ")
+    print("                       _____| ")
+    print("Robocritic.           [o _ o] ")
+    print("-----------------------------------------------------------------------")
+    print(" train (nb | rf) file_name.csv   |   classify file_name.csv   |   quit ")
+    print("-----------------------------------------------------------------------")
 
     _command_loop(None)

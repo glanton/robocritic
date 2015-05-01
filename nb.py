@@ -24,7 +24,7 @@ def train(parsed_training_data):
     for row in parsed_training_data[1:]:
 
         # debug counter
-        debug.run_counter("nb.train", 10)
+        debug.run_counter("nb.train", 100)
 
         # count the occurrences of each class and add to the class counts dictionary
         class_name = row[1]
@@ -52,6 +52,9 @@ def train(parsed_training_data):
     classifier = Classifier.Classifier("nb", class_names_counts, classifier_features)
     for detail in classifier_details:
         classifier.add_classifier_detail(detail)
+
+    # reset the debug counter
+    debug.reset_counter("nb.train")
 
     return classifier
 
@@ -91,7 +94,7 @@ def classify(parsed_test_data, classifier):
     for row in parsed_test_data[1:]:
 
         # debug counter
-        debug.run_counter("nb.classify", 10)
+        debug.run_counter("nb.classify", 100)
 
         # feature-by-feature lists of probabilities that the record belongs to the first or second classes
         # first probability in the lists is the overall probability that a record belongs to that class
@@ -129,5 +132,8 @@ def classify(parsed_test_data, classifier):
                 results.append((record, fc_name))
             else:
                 results.append((record, sc_name))
+
+    # reset the debug counter
+    debug.reset_counter("nb.classify")
 
     return results

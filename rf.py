@@ -12,7 +12,7 @@ import random
 
 
 # the maximum number of random decision trees to train
-_max_trees = 100
+_max_trees = 500
 
 # the maximum number of random features to sample
 _max_sample = 200
@@ -21,7 +21,7 @@ _max_sample = 200
 _leaf_threshold = 5
 
 # the maximum number of times a tree can recurse into new branches when growing (1000 is Python's default internal max)
-_rec_limit = 20
+_rec_limit = 100
 
 
 # public interface function to training a classifier; expects 2D list with binary features as input
@@ -237,6 +237,9 @@ def train(parsed_training_data):
     for detail in classifier_details:
         classifier.add_classifier_detail(detail)
 
+    # reset the debug counter
+    debug.reset_counter("rf.train")
+
     return classifier
 
 
@@ -313,5 +316,8 @@ def classify(parsed_test_data, classifier):
                 results.append((record, fc_name))
             else:
                 results.append((record, sc_name))
+
+    # reset the debug counter
+    debug.reset_counter("rf.classify")
 
     return results
